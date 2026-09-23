@@ -3,17 +3,15 @@ from discord.ext import commands
 import asyncio
 import yt_dlp
 import imageio_ffmpeg
-import os
 
+# استخدام بحث SoundCloud لتجنب حظر يوتيوب نهائياً
 YTDL_OPTIONS = {
     'format': 'bestaudio/best',
     'noplaylist': True,
     'quiet': True,
     'no_warnings': True,
-    'default_search': 'auto',
-    'source_address': '0.0.0.0',
-    'cookiefile': 'cookies.txt',
-    'extractor_args': {'youtube': {'player_client': ['android_music', 'web']}}
+    'default_search': 'scsearch',  # البحث التلقائي في ساوند كلاود
+    'source_address': '0.0.0.0'
 }
 
 FFMPEG_OPTIONS = {
@@ -64,12 +62,12 @@ class Play(commands.Cog):
 
             await channel.send(f"🎶 **شغال الآن:** {title}")
         except Exception as e:
-            await channel.send(f"❌ تعذر تشغيل المقطع: تأكد من الرابط أو اسم الشيلة", delete_after=5)
+            await channel.send(f"❌ تعذر العثور على المقطع، جرب اسم آخر", delete_after=5)
 
     @commands.command(name="1play")
     async def play_prefix(self, ctx, *, search: str = None):
         if not search:
-            await ctx.send("❌ اكتب اسم أو رابط المقطع!", delete_after=5)
+            await ctx.send("❌ اكتب اسم المقطع!", delete_after=5)
             return
         await self.execute_play(ctx, search)
 
@@ -88,7 +86,7 @@ class Play(commands.Cog):
             if len(parts) > 1:
                 await self.execute_play(message, parts[1].strip())
             else:
-                await message.channel.send("❌ اكتب اسم أو رابط المقطع!", delete_after=5)
+                await message.channel.send("❌ اكتب اسم المقطع!", delete_after=5)
 
 async def setup(bot):
     await bot.add_cog(Play(bot))
