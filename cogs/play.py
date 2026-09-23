@@ -13,7 +13,7 @@ YTDL_OPTIONS = {
     'default_search': 'auto',
     'source_address': '0.0.0.0',
     'cookiefile': 'cookies.txt',
-    'extractor_args': {'youtube': {'player_client': ['android', 'web']}}
+    'extractor_args': {'youtube': {'player_client': ['android_music', 'web']}}
 }
 
 FFMPEG_OPTIONS = {
@@ -46,7 +46,6 @@ class Play(commands.Cog):
             except Exception:
                 pass
 
-        # سرعة استجابة فائقة بدون رسالة "جاري التشغيل"
         loop = asyncio.get_event_loop()
         try:
             data = await loop.run_in_executor(None, lambda: ytdl.extract_info(search, download=False))
@@ -63,7 +62,6 @@ class Play(commands.Cog):
             source = await discord.FFmpegOpusAudio.from_probe(url, executable=ffmpeg_exe, **FFMPEG_OPTIONS)
             vc.play(source)
 
-            # يرسل اسم الأغنية مباشرة وبشكل فوري
             await channel.send(f"🎶 **شغال الآن:** {title}")
         except Exception as e:
             await channel.send(f"❌ تعذر تشغيل المقطع: تأكد من الرابط أو اسم الشيلة", delete_after=5)
