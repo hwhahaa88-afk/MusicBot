@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import asyncio
 import yt_dlp
+import imageio_ffmpeg
 
 YTDL_OPTIONS = {
     'format': 'bestaudio/best',
@@ -9,8 +10,7 @@ YTDL_OPTIONS = {
     'quiet': True,
     'no_warnings': True,
     'default_search': 'auto',
-    'source_address': '0.0.0.0',
-    'extract_flat': False
+    'source_address': '0.0.0.0'
 }
 
 FFMPEG_OPTIONS = {
@@ -39,13 +39,11 @@ class Play(commands.Cog):
         vc = guild.voice_client
         if not vc:
             try:
-                vc = await author.voice.channel.connect()
+                vc = await author.voice.channel.connect(self_deaf=True)
             except Exception:
                 pass
 
-        # استجابة فائقة السرعة 0.3 ثانية
         await asyncio.sleep(0.3)
-
         msg = await channel.send("🔍 جاري التشغيل...")
 
         loop = asyncio.get_event_loop()
@@ -60,22 +58,22 @@ class Play(commands.Cog):
             if vc and vc.is_playing():
                 vc.stop()
 
-            source = await discord.FFmpegOpusAudio.from_probe(url, **FFMPEG_OPTIONS)
+            # استخدام مشغل الصوت الخاص بالسيرفر
+            ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+            source = await discord.FFmpegOpusAudio.from_probe(url, executable=ffmpeg_exe, **FFMPEG_OPTIONS)
             vc.play(source)
 
             await msg.edit(content=f"🎶 **شغال الآن:** {title}")
         except Exception as e:
             await msg.edit(content=f"❌ تعذر تشغيل المقطع: {e}")
 
-    # أمر مع البادئة (!1play)
     @commands.command(name="1play")
     async def play_prefix(self, ctx, *, search: str = None):
         if not search:
-            await ctx.send("❌ اكتب اسم أو رابط المقطع بعد الأمر!", delete_after=5)
+            await ctx.send("❌ اكتب اسم أو رابط المقطع!", delete_after=5)
             return
         await self.execute_play(ctx, search)
 
-    # تشغيل بدون بادئة (Prefix-less) للأوامر: play, p, شغل, ش
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot or not message.guild:
@@ -89,8 +87,7 @@ class Play(commands.Cog):
 
         if trigger in prefixless_commands:
             if len(parts) > 1:
-                search_query = parts[1].strip()
-                await self.execute_play(message, search_query)
+                await self.execute_play(message, parts[1].strip())
             else:
                 await message.channel.send("❌ اكتب اسم أو رابط المقطع!", delete_after=5)
 
