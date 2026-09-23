@@ -3,6 +3,7 @@ from discord.ext import commands
 import asyncio
 import yt_dlp
 import imageio_ffmpeg
+import os
 
 YTDL_OPTIONS = {
     'format': 'bestaudio/best',
@@ -10,7 +11,8 @@ YTDL_OPTIONS = {
     'quiet': True,
     'no_warnings': True,
     'default_search': 'auto',
-    'source_address': '0.0.0.0'
+    'source_address': '0.0.0.0',
+    'cookiefile': 'cookies.txt'  # ربط ملف الكوكيز لتجاوز حظر يوتيوب
 }
 
 FFMPEG_OPTIONS = {
@@ -58,7 +60,6 @@ class Play(commands.Cog):
             if vc and vc.is_playing():
                 vc.stop()
 
-            # استخدام مشغل الصوت الخاص بالسيرفر
             ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
             source = await discord.FFmpegOpusAudio.from_probe(url, executable=ffmpeg_exe, **FFMPEG_OPTIONS)
             vc.play(source)
