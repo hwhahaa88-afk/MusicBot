@@ -12,7 +12,8 @@ YTDL_OPTIONS = {
     'no_warnings': True,
     'default_search': 'auto',
     'source_address': '0.0.0.0',
-    'cookiefile': 'cookies.txt'  # ربط ملف الكوكيز لتجاوز حظر يوتيوب
+    'cookiefile': 'cookies.txt',
+    'extractor_args': {'youtube': {'player_client': ['android', 'web']}}
 }
 
 FFMPEG_OPTIONS = {
@@ -45,9 +46,7 @@ class Play(commands.Cog):
             except Exception:
                 pass
 
-        await asyncio.sleep(0.3)
-        msg = await channel.send("🔍 جاري التشغيل...")
-
+        # سرعة استجابة فائقة بدون رسالة "جاري التشغيل"
         loop = asyncio.get_event_loop()
         try:
             data = await loop.run_in_executor(None, lambda: ytdl.extract_info(search, download=False))
@@ -64,9 +63,10 @@ class Play(commands.Cog):
             source = await discord.FFmpegOpusAudio.from_probe(url, executable=ffmpeg_exe, **FFMPEG_OPTIONS)
             vc.play(source)
 
-            await msg.edit(content=f"🎶 **شغال الآن:** {title}")
+            # يرسل اسم الأغنية مباشرة وبشكل فوري
+            await channel.send(f"🎶 **شغال الآن:** {title}")
         except Exception as e:
-            await msg.edit(content=f"❌ تعذر تشغيل المقطع: {e}")
+            await channel.send(f"❌ تعذر تشغيل المقطع: تأكد من الرابط أو اسم الشيلة", delete_after=5)
 
     @commands.command(name="1play")
     async def play_prefix(self, ctx, *, search: str = None):
