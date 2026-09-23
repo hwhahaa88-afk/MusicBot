@@ -1,5 +1,5 @@
 discord.py[voice]
-yt-dlp
+yt-dlp --upgrade
 PyNaCl
 aiohttp
 imageio-ffmpeg
