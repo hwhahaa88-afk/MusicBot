@@ -13,7 +13,7 @@ class Queue(commands.Cog):
         if message.author.bot or message.channel.id != 1540686258379169814: return
         cmd = message.content.strip().split('\n')[0].split(' ', 1)[0].lower()
 
-        if cmd in ['queue', 'q', 'ق', 'قائمه', 'قائمة']:
+        if cmd in ['queue', 'q', 'قائمه', 'قائمة']:
             user_voice = message.author.voice
             if not user_voice or user_voice.channel.id != VOICE_CHANNEL_ID:
                 target_vc = self.bot.get_channel(VOICE_CHANNEL_ID)

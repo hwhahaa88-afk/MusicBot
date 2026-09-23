@@ -1,11 +1,19 @@
-import discord
+import re
+
+with open('main.py', 'r') as f:
+    content = f.read()
+
+token_match = re.search(r'bot\.start\([\'"]([^\'"]+)[\'"]\)', content)
+token = token_match.group(1) if token_match else "YOUR_TOKEN"
+
+main_code = f"""import discord
 from discord.ext import commands
 import asyncio
 import os
 
 if not discord.opus.is_loaded():
     try: discord.opus.load_opus('libopus.so')
-    except:
+    except: 
         try: discord.opus.load_opus('/data/data/com.termux/files/usr/lib/libopus.so')
         except: pass
 
@@ -16,17 +24,15 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 TARGET_VC = 1540686258379169814
 
 async def load_cogs():
-    if not os.path.exists('./cogs'):
-        return
     for filename in os.listdir('./cogs'):
         if filename.endswith('.py'):
-            try: await bot.load_extension(f'cogs.{filename[:-3]}')
+            try: await bot.load_extension(f'cogs.{{filename[:-3]}}')
             except: pass
 
 @bot.event
 async def on_ready():
-    print(f"Logged in as {bot.user.name}")
-    activity = discord.Streaming(name="Music", url="https://twitch.tv/discord")
+    print(f"Logged in as {{bot.user.name}}")
+    activity = discord.Streaming(name="Rouse", url="https://www.twitch.tv/discord")
     await bot.change_presence(activity=activity)
     bot.loop.create_task(stubborn_connect())
 
@@ -39,12 +45,13 @@ async def stubborn_connect():
         if not vc or not vc.is_connected():
             try:
                 await channel.connect(self_deaf=True)
-                print("✅ متصل بالروم")
+                print("✅ دخلت الروم بنجاح ولن أخرج منه!")
             except Exception as e:
-                pass
+                print(f"❌ خطأ في دخول الروم: {{e}}")
 
 @bot.event
 async def on_voice_state_update(member, before, after):
+    # نظام العناد: إذا انطرد أو انسحب يرجع فوراً
     if member.id == bot.user.id:
         if after.channel is None:
             await asyncio.sleep(1)
@@ -58,13 +65,13 @@ async def on_voice_state_update(member, before, after):
 
 async def main():
     await load_cogs()
-    # جيت هاب ما راح يزعل الحين لأن التوكن مخفي
-    token = os.getenv("DISCORD_TOKEN")
-    if token:
-        await bot.start(token)
-    else:
-        print("Waiting for token...")
+    await bot.start("{token}")
 
 if __name__ == "__main__":
     try: asyncio.run(main())
     except: pass
+"""
+with open('main.py', 'w') as f:
+    f.write(main_code)
+
+print("✅ تم تعديل الملف الأساسي ليكون البوت عنيداً!")

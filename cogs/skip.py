@@ -1,8 +1,7 @@
 import discord
 from discord.ext import commands
+import asyncio
 from core import music_state
-
-VOICE_CHANNEL_ID = 1540686258379169814
 
 class Skip(commands.Cog):
     def __init__(self, bot):
@@ -10,44 +9,57 @@ class Skip(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.author.bot or message.channel.id != 1540686258379169814: return
-        cmd = message.content.strip().split('\n')[0].split(' ', 1)[0].lower()
-
-        if cmd in ['skip', 's', 'سكب', 'س']:
+        if message.author.bot: return
+        content = message.content.strip()
+        if not content: return
+        parts = content.split('\n')[0].split(' ', 1)
+        cmd = parts[0].lower()
+        
+        clean_cmd = cmd
+        if clean_cmd.startswith('!'): clean_cmd = clean_cmd[1:]
+        
+        valid_cmds = ['skip', 's', 'تخطي', '1skip', '1s']
+        
+        if clean_cmd in valid_cmds or cmd in valid_cmds:
+            
+            guild = message.guild
+            vc = guild.voice_client
             user_voice = message.author.voice
-            if not user_voice or user_voice.channel.id != VOICE_CHANNEL_ID:
-                target_vc = self.bot.get_channel(VOICE_CHANNEL_ID)
-                vc_name = target_vc.name if target_vc else "Voice Room"
-                try:
-                    bot_msg = await message.reply(f"*You must be listening in* **``{vc_name}``**.", mention_author=False)
-                    music_state.bot_replies[message.id] = bot_msg
+            
+            if not user_voice or not user_voice.channel:
+                try: await message.reply("*You must be in a Voice Channel first.*", mention_author=False)
                 except: pass
                 return
-
+            
             if user_voice.self_deaf or user_voice.deaf:
-                try:
-                    bot_msg = await message.reply("*You must to unDeafen to use commands .*", mention_author=False)
-                    music_state.bot_replies[message.id] = bot_msg
+                try: await message.reply("*You must undeafen to use this command.*", mention_author=False)
                 except: pass
                 return
 
-            vc = message.guild.voice_client
-            if vc and vc.is_playing():
-                music_state.loops[message.guild.id] = False
-                current_song = music_state.current_song.get(message.guild.id)
-                title = current_song['title'] if current_song else "Unknown Track"
-                requester = current_song['requester'] if current_song else "UNKNOWN"
-                
+            if vc and vc.is_connected():
+                if user_voice.channel.id != vc.channel.id:
+                    try: await message.reply(f"*You must be listening in* **`{vc.channel.name}`**.", mention_author=False)
+                    except: pass
+                    return
+                    
+            if not vc or not vc.is_playing():
+                try: await message.reply("*There is no song currently playing.*", mention_author=False)
+                except: pass
+                return
+
+            # سحب اسم الأغنية الحالية قبل التخطي
+            current = music_state.current_song.get(guild.id)
+            title = current['title'] if current else "Unknown Track"
+            skipper = message.author.display_name
+
+            # تنفيذ الإيقاف وإرسال الرسالة كـ "مهمة خلفية" لسرعة استجابة فورية (0 تأخير)
+            async def instant_skip():
                 vc.stop()
-                try:
-                    bot_msg = await message.reply(f"*Skiped :* **{title}** *by :* **{requester}**.", mention_author=False)
-                    music_state.bot_replies[message.id] = bot_msg
+                try: 
+                    await message.reply(f"*Skiped :* **{title}** *by :* **{skipper}**.", mention_author=False)
                 except: pass
-            else:
-                try:
-                    bot_msg = await message.reply("*Server queue is empty.*", mention_author=False)
-                    music_state.bot_replies[message.id] = bot_msg
-                except: pass
+
+            asyncio.create_task(instant_skip())
 
 async def setup(bot):
     await bot.add_cog(Skip(bot))
